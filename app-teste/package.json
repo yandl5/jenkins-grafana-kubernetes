@@ -1,0 +1,14 @@
+{
+    "name": "node-jenkins-example",
+    "version": "1.0.0",
+    "description": "A simple app for Jenkins CI/CD example",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "dependencies": {
+      "express": "^4.17.1"
+    },
+    "devDependencies": {}
+  }
+  

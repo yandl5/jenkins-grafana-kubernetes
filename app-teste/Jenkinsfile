@@ -1,0 +1,58 @@
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'podman-6834p-rk1w2'
+            defaultContainer 'jenkins'
+        }
+    }
+
+    environment {
+        DOCKER_IMAGE = 'node-jenkins-example:latest'
+        REGISTRY = 'your-docker-registry'
+        K8S_NAMESPACE = 'jenkins'
+        K8S_DEPLOYMENT = 'nodejs-deployment'
+        APP_DIR = 'app-teste'
+    }
+
+    stages {
+        stage('Verify Podman Installation') {
+            steps {
+                script {
+                    sh 'podman --version'
+                }
+            }
+        }
+
+        stage('Clone Repository') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Podman Image') {
+            steps {
+                script {
+                    dir(APP_DIR) {
+                        sh 'podman build -t ${DOCKER_IMAGE} .'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    kubernetesDeploy(configs: 'k8s/deployment.yaml', kubeconfigId: 'local')
+                }
+            }
+        }
+
+        stage('Clean Up') {
+            steps {
+                script {
+                    sh 'podman system prune -f'
+                }
+            }
+        }
+    }
+}

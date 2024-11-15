@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-deployment
+  labels:
+    app: nodejs-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodejs-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-app
+    spec:
+      containers:
+        - name: nodejs-container
+          image: node:14-alpine
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - mountPath: /app
+              name: app-volume
+      volumes:
+        - name: app-volume
+          configMap:
+            name: nodejs-app-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-service
+spec:
+  selector:
+    app: nodejs-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nodejs-app-config
+data:
+  app.js: |
+    const http = require('http');
+    const port = 3000;
+
+    const requestHandler = (req, res) => {
+      res.end('Hello, Node.js app running in Kubernetes!');
+    };
+
+    const server = http.createServer(requestHandler);
+
+    server.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });

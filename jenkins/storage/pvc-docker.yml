@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-socket-pv
+  namespace: jenkins  # Substitua pelo namespace onde seu Jenkins será executado
+spec:
+  capacity:
+    storage: 10Gi  # Tamanho do volume
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain  # Pode ser "Delete" se quiser que o volume seja deletado quando o PVC for removido
+  storageClassName: standard  # Use a StorageClass adequada para o seu ambiente
+  hostPath:
+    path: /var/run/docker.sock  # Caminho do socket Docker no nó do Kubernetes
+    type: Socket  # O tipo de arquivo para o volume hostPath
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-socket-pvc
+  namespace: jenkins  # Substitua pelo namespace onde seu Jenkins será executado
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi  # Tamanho do volume solicitado
+  storageClassName: standard  # A mesma StorageClass usada no PV
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-pod
+  namespace: jenkins  # Substitua pelo namespace onde seu Jenkins será executado
+spec:
+  containers:
+    - name: jenkins
+      image: jenkins/jenkins:lts
+      volumeMounts:
+        - mountPath: /var/run/docker.sock  # Caminho dentro do contêiner onde o socket será montado
+          name: docker-socket
+  volumes:
+    - name: docker-socket
+      persistentVolumeClaim:
+        claimName: docker-socket-pvc  # PVC que será montado no contêiner

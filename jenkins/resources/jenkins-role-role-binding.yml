@@ -1,0 +1,60 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: jenkins
+  name: jenkins
+rules:
+  # Permissões para acessar recursos de Pods, Deployments, Replicasets, etc.
+  - apiGroups: [""]
+    resources: ["pods", "pods/exec", "pods/log", "services", "deployments", "replicasets", "endpoints", "configmaps"]
+    verbs: ["get", "list", "create", "update", "delete", "watch"]
+  
+  # Permissões para gerenciar Secrets (criação, leitura e atualização de segredos)
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  
+  # Permissões para interagir com Ingress e Network Policies (caso seu Jenkins precise expor recursos via Ingress)
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "create", "update", "delete"]
+
+  # Permissões para interagir com namespaces e rolebindings (para gerenciamento de namespaces e segurança)
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["rolebindings", "roles", "serviceaccounts"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  
+  # Permissões para interagir com StatefulSets (caso seu Jenkins utilize StatefulSets)
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list", "create", "update", "delete"]
+
+  # Permissões para acessar o ConfigMap (geralmente para armazenar configurações do Jenkins)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  
+  # Permissões para acessar CustomResourceDefinitions (CRDs) - útil se você usar CRDs no seu cluster
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  
+  # Permissões para gerenciar namespaces
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "create", "update", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jenkins-rolebinding
+  namespace: jenkins
+subjects:
+  - kind: ServiceAccount
+    name: jenkins
+    namespace: jenkins
+roleRef:
+  kind: Role
+  name: jenkins
+  apiGroup: rbac.authorization.k8s.io
